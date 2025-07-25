@@ -528,53 +528,62 @@ async function loadFuelPrices() {
     try {
         const selectedCity = document.getElementById('citySelect')?.value || 'ISTANBUL';
         const selectedFuelType = document.getElementById('fuelType')?.value || 'Motorin(Eurodiesel)_TL/lt';
-try {
+        
+        try {
             const response = await fetch(`/api/akaryakit/sehir=${selectedCity}`);
             const data = await response.json();
         
-        if (data && data.data) {
-            // Get the first station's price for the selected fuel type
-            const stations = Object.values(data.data);
-            let price = null;
-            
-            for (const station of stations) {
-                if (station[selectedFuelType] && station[selectedFuelType] !== '-' && station[selectedFuelType] !== '') {
-                    price = parseFloat(station[selectedFuelType].replace(',', '.'));
-                    break;
+            if (data && data.data) {
+                // Get the first station's price for the selected fuel type
+                const stations = Object.values(data.data);
+                let price = null;
+                
+                for (const station of stations) {
+                    if (station[selectedFuelType] && station[selectedFuelType] !== '-' && station[selectedFuelType] !== '') {
+                        price = parseFloat(station[selectedFuelType].replace(',', '.'));
+                        break;
+                    }
                 }
+                
+                if (price) {
+                    currentFuelPrice = price;
+                    currentPriceElement.textContent = `₺${price.toFixed(2)} / L`;
+                } else {
+                    throw new Error('No price data available');
+                }
+            } else {
+                throw new Error('Invalid API response');
             }
             
-            if (price) {
-                currentFuelPrice = price;
-                currentPriceElement.textContent = `₺${price.toFixed(2)} / L`;
-            } else {
-                throw new Error('No price data available');
-            }
-        } else {
-            throw new Error('Invalid API response');
+            const now = new Date();
+            const timeString = currentLanguage === 'tr' ? 
+                `Son güncelleme: ${now.toLocaleDateString('tr-TR')}` :
+                `Last update: ${now.toLocaleDateString('en-US')}`;
+            updateTimeElement.textContent = timeString;
+            
+        } catch (error) {
+            console.error('Error loading fuel prices:', error);
+            // Fallback to mock price
+            const mockPrice = 55.50 + (Math.random() - 0.5) * 2;
+            currentFuelPrice = mockPrice;
+            currentPriceElement.textContent = `₺${mockPrice.toFixed(2)} / L`;
+            
+            const now = new Date();
+            const timeString = currentLanguage === 'tr' ? 
+                `Son güncelleme: ${now.toLocaleDateString('tr-TR')} (Demo)` :
+                `Last update: ${now.toLocaleDateString('en-US')} (Demo)`;
+            updateTimeElement.textContent = timeString;
+        } finally {
+            priceLoader.style.display = 'none';
         }
-        
-        const now = new Date();
-        const timeString = currentLanguage === 'tr' ? 
-            `Son güncelleme: ${now.toLocaleDateString('tr-TR')}` :
-            `Last update: ${now.toLocaleDateString('en-US')}`;
-        updateTimeElement.textContent = timeString;
-        
     } catch (error) {
-        console.error('Error loading fuel prices:', error);
+        console.error('Fuel price loading error:', error);
         // Fallback to mock price
-        const mockPrice = 55.50 + (Math.random() - 0.5) * 2;
-        currentFuelPrice = mockPrice;
-        currentPriceElement.textContent = `₺${mockPrice.toFixed(2)} / L`;
-        
-        const now = new Date();
-        const timeString = currentLanguage === 'tr' ? 
-            `Son güncelleme: ${now.toLocaleDateString('tr-TR')} (Demo)` :
-            `Last update: ${now.toLocaleDateString('en-US')} (Demo)`;
-        updateTimeElement.textContent = timeString;
-    } finally {
+        currentFuelPrice = 55.50;
+        currentPriceElement.textContent = `₺${currentFuelPrice.toFixed(2)} / L`;
         priceLoader.style.display = 'none';
     }
+}
 }
 
 // Handle vehicle type change
