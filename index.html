@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mazot Hesaplayıcı - Fuel Track</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Language Toggle -->
+    <div class="language-toggle">
+        <button id="langTr" class="lang-btn active">TR</button>
+        <button id="langEn" class="lang-btn">EN</button>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-gas-pump"></i>
+                <span data-tr="Mazot Hesaplayıcı" data-en="Fuel Calculator">Mazot Hesaplayıcı</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Price Display -->
+    <div class="price-display">
+        <div class="container">
+            <div class="price-card">
+                <div class="price-info">
+                    <i class="fas fa-gas-pump"></i>
+                    <div>
+                        <h3 data-tr="Güncel Mazot Fiyatı" data-en="Current Diesel Price">Güncel Mazot Fiyatı</h3>
+                        <div class="price" id="currentPrice">₺55.50 / L</div>
+                        <small class="update-time" id="updateTime" data-tr="Son güncelleme: Bugün" data-en="Last update: Today">Son güncelleme: Bugün</small>
+                    </div>
+                </div>
+                <div class="loading-spinner" id="priceLoader" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ad Banner Top -->
+    <div class="ad-banner ad-top">
+        <div class="ad-content">
+            <i class="fas fa-ad"></i>
+            <span data-tr="Reklam Alanı - 728x90" data-en="Advertisement Space - 728x90">Reklam Alanı - 728x90</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="content-grid">
+                <!-- Calculator Panel -->
+                <div class="calculator-panel">
+                    <div class="panel-header">
+                        <h2 data-tr="Yakıt Maliyeti Hesaplayıcı" data-en="Fuel Cost Calculator">Yakıt Maliyeti Hesaplayıcı</h2>
+                    </div>
+
+                    <form class="calculator-form" id="calculatorForm">
+                        <!-- Step 1: Location Selection -->
+                        <div class="form-step">
+                            <h3 class="step-title">
+                                <span class="step-number">1</span>
+                                <span data-tr="Güzergah Seçin" data-en="Select Route">Güzergah Seçin</span>
+                            </h3>
+                            <div class="input-group">
+                                <div class="route-inputs">
+                                    <div class="location-input">
+                                        <div class="input-with-icon">
+                                            <input type="text" id="fromLocation" placeholder="Nereden?" data-tr-placeholder="Nereden?" data-en-placeholder="From where?">
+                                            <i class="fas fa-map-marker-alt input-icon from-marker"></i>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="swap-btn" id="swapLocations" title="Konumları değiştir">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </button>
+                                    <div class="location-input">
+                                        <div class="input-with-icon">
+                                            <input type="text" id="toLocation" placeholder="Nereye?" data-tr-placeholder="Nereye?" data-en-placeholder="To where?">
+                                            <i class="fas fa-map-marker-alt input-icon to-marker"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label data-tr="Mesafe (KM)" data-en="Distance (KM)">Mesafe (KM)</label>
+                                <div class="distance-input">
+                                    <div class="input-with-icon">
+                                        <input type="number" id="distance" placeholder="0" min="0" step="0.1">
+                                        <i class="fas fa-road input-icon"></i>
+                                    </div>
+                                    <button type="button" class="calculate-distance-btn" id="calculateDistance">
+                                        <i class="fas fa-route"></i>
+                                        <span data-tr="Hesapla" data-en="Calculate">Hesapla</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Fuel Settings -->
+                        <div class="form-step">
+                            <h3 class="step-title">
+                                <span class="step-number">2</span>
+                                <span data-tr="Yakıt Ayarları" data-en="Fuel Settings">Yakıt Ayarları</span>
+                            </h3>
+                            <div class="input-row">
+                                <div class="input-group">
+                                    <label data-tr="Şehir" data-en="City">Şehir</label>
+                                    <select id="citySelect">
+                                        <option value="ISTANBUL" data-tr="İstanbul" data-en="Istanbul">İstanbul</option>
+                                        <option value="ANKARA" data-tr="Ankara" data-en="Ankara">Ankara</option>
+                                        <option value="IZMIR" data-tr="İzmir" data-en="Izmir">İzmir</option>
+                                        <option value="ADANA" data-tr="Adana" data-en="Adana">Adana</option>
+                                        <option value="ANTALYA" data-tr="Antalya" data-en="Antalya">Antalya</option>
+                                        <option value="BURSA" data-tr="Bursa" data-en="Bursa">Bursa</option>
+                                        <option value="GAZIANTEP" data-tr="Gaziantep" data-en="Gaziantep">Gaziantep</option>
+                                        <option value="KONYA" data-tr="Konya" data-en="Konya">Konya</option>
+                                        <option value="KAYSERI" data-tr="Kayseri" data-en="Kayseri">Kayseri</option>
+                                        <option value="ESKISEHIR" data-tr="Eskişehir" data-en="Eskisehir">Eskişehir</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label data-tr="Yakıt Tipi" data-en="Fuel Type">Yakıt Tipi</label>
+                                    <select id="fuelType">
+                                        <option value="Motorin(Eurodiesel)_TL/lt" data-tr="Motorin (Eurodiesel)" data-en="Diesel (Eurodiesel)">Motorin (Eurodiesel)</option>
+                                        <option value="Kursunsuz_95(Excellium95)_TL/lt" data-tr="Kurşunsuz 95" data-en="Unleaded 95">Kurşunsuz 95</option>
+                                        <option value="Otogaz_TL/lt" data-tr="Otogaz" data-en="LPG">Otogaz</option>
+                                        <option value="Gazyagi_TL/lt" data-tr="Gazyağı" data-en="Kerosene">Gazyağı</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Vehicle Settings -->
+                        <div class="form-step">
+                            <h3 class="step-title">
+                                <span class="step-number">3</span>
+                                <span data-tr="Araç Bilgileri" data-en="Vehicle Information">Araç Bilgileri</span>
+                            </h3>
+                            <div class="input-group">
+                                <label data-tr="Araç Tipi" data-en="Vehicle Type">Araç Tipi</label>
+                                <select id="vehicleType">
+                                    <option value="8" data-tr="Orta Otomobil (8L/100km)" data-en="Medium Car (8L/100km)" selected>Orta Otomobil (8L/100km)</option>
+                                    <option value="6" data-tr="Küçük Otomobil (6L/100km)" data-en="Small Car (6L/100km)">Küçük Otomobil (6L/100km)</option>
+                                    <option value="10" data-tr="Büyük Otomobil (10L/100km)" data-en="Large Car (10L/100km)">Büyük Otomobil (10L/100km)</option>
+                                    <option value="12" data-tr="SUV (12L/100km)" data-en="SUV (12L/100km)">SUV (12L/100km)</option>
+                                    <option value="15" data-tr="Minibüs (15L/100km)" data-en="Minibus (15L/100km)">Minibüs (15L/100km)</option>
+                                    <option value="20" data-tr="Kamyonet (20L/100km)" data-en="Pickup Truck (20L/100km)">Kamyonet (20L/100km)</option>
+                                    <option value="25" data-tr="Kamyon (25L/100km)" data-en="Truck (25L/100km)">Kamyon (25L/100km)</option>
+                                    <option value="35" data-tr="Büyük Kamyon (35L/100km)" data-en="Large Truck (35L/100km)">Büyük Kamyon (35L/100km)</option>
+                                    <option value="custom" data-tr="Manuel Giriş" data-en="Manual Input">Manuel Giriş</option>
+                                </select>
+                            </div>
+
+                        <!-- Fuel Consumption -->
+                        <div class="input-group" id="customConsumptionGroup">
+                            <label data-tr="Yakıt Tüketimi (L/100km)" data-en="Fuel Consumption (L/100km)">Yakıt Tüketimi (L/100km)</label>
+                            <div class="input-with-icon">
+                                <input type="number" id="fuelConsumption" placeholder="8.5" min="1" max="50" step="0.1">
+                                <i class="fas fa-gas-pump input-icon"></i>
+                            </div>
+                        </div>
+
+                        <!-- Trip Type -->
+                        <div class="input-group">
+                            <label data-tr="Yolculuk Tipi" data-en="Trip Type">Yolculuk Tipi</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" id="oneway" name="tripType" value="oneway" checked>
+                                    <span data-tr="Tek Yön" data-en="One Way">Tek Yön</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" id="roundtrip" name="tripType" value="roundtrip">
+                                    <span data-tr="Gidiş-Dönüş" data-en="Round Trip">Gidiş-Dönüş</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Calculate Button -->
+                        <button type="submit" class="calculate-btn">
+                            <i class="fas fa-calculator"></i>
+                            <span data-tr="Maliyeti Hesapla" data-en="Calculate Cost">Maliyeti Hesapla</span>
+                        </button>
+                    </form>
+
+                    <!-- Results -->
+                    <div class="results" id="results" style="display: none;">
+                        <h3 data-tr="Hesaplama Sonucu" data-en="Calculation Result">Hesaplama Sonucu</h3>
+                        <div class="result-cards">
+                            <div class="result-card">
+                                <div class="result-icon">
+                                    <i class="fas fa-route"></i>
+                                </div>
+                                <div class="result-info">
+                                    <span class="result-label" data-tr="Toplam Mesafe" data-en="Total Distance">Toplam Mesafe</span>
+                                    <span class="result-value" id="totalDistance">0 km</span>
+                                </div>
+                            </div>
+                            <div class="result-card">
+                                <div class="result-icon">
+                                    <i class="fas fa-gas-pump"></i>
+                                </div>
+                                <div class="result-info">
+                                    <span class="result-label" data-tr="Yakıt Tüketimi" data-en="Fuel Consumption">Yakıt Tüketimi</span>
+                                    <span class="result-value" id="fuelNeeded">0 L</span>
+                                </div>
+                            </div>
+                            <div class="result-card primary">
+                                <div class="result-icon">
+                                    <i class="fas fa-lira-sign"></i>
+                                </div>
+                                <div class="result-info">
+                                    <span class="result-label" data-tr="Toplam Maliyet" data-en="Total Cost">Toplam Maliyet</span>
+                                    <span class="result-value" id="totalCost">₺0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Google Ads - Inline Ad -->
+                    <div class="inline-ad">
+                        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXX"
+                                crossorigin="anonymous"></script>
+                        <!-- Fuel Calculator Inline -->
+                        <ins class="adsbygoogle"
+                             style="display:block; text-align:center;"
+                             data-ad-layout="in-article"
+                             data-ad-format="fluid"
+                             data-ad-client="ca-pub-XXXXXXXXXX"
+                             data-ad-slot="XXXXXXXXXX"></ins>
+                        <script>
+                             (adsbygoogle = window.adsbygoogle || []).push({});
+                        </script>
+                    </div>
+                </div>
+
+                <!-- Map Panel -->
+                <div class="map-panel">
+                    <div class="panel-header">
+                        <h3 data-tr="Rota Haritası" data-en="Route Map">Rota Haritası</h3>
+                        <div class="map-controls">
+                            <button class="map-btn" id="clearRoute" title="Rotayı temizle">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button class="map-btn" id="centerMap" title="Haritayı ortala">
+                                <i class="fas fa-crosshairs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="map-container">
+                        <div id="map"></div>
+                        <div class="map-loading" id="mapLoading" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span data-tr="Rota hesaplanıyor..." data-en="Calculating route...">Rota hesaplanıyor...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Ad Banner Bottom -->
+    <div class="ad-banner ad-bottom">
+        <div class="ad-content">
+            <i class="fas fa-ad"></i>
+            <span data-tr="Reklam Alanı - 728x90" data-en="Advertisement Space - 728x90">Reklam Alanı - 728x90</span>
+        </div>
+    </div>
+
+    <!-- Google Ads Section -->
+    <div class="ads-container">
+        <div class="ad-banner">
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXX"
+                    crossorigin="anonymous"></script>
+            <!-- Fuel Calculator Banner -->
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-XXXXXXXXXX"
+                 data-ad-slot="XXXXXXXXXX"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>
+                 (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
