@@ -523,14 +523,20 @@ async function loadFuelPrices() {
     const currentPriceElement = document.getElementById('currentPrice');
     const updateTimeElement = document.getElementById('updateTime');
     
-    priceLoader.style.display = 'block';
+    if (priceLoader) priceLoader.style.display = 'block';
     
     try {
         const selectedCity = document.getElementById('citySelect')?.value || 'ISTANBUL';
         const selectedFuelType = document.getElementById('fuelType')?.value || 'Motorin(Eurodiesel)_TL/lt';
-try {
-            const response = await fetch(`/api/akaryakit/sehir=${selectedCity}`);
-            const data = await response.json();
+        
+        // Try to fetch real fuel prices from API
+        const response = await fetch(`/api/akaryakit/sehir=${selectedCity}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
         
         if (data && data.data) {
             // Get the first station's price for the selected fuel type
@@ -539,41 +545,61 @@ try {
             
             for (const station of stations) {
                 if (station[selectedFuelType] && station[selectedFuelType] !== '-' && station[selectedFuelType] !== '') {
-                    price = parseFloat(station[selectedFuelType].replace(',', '.'));
-                    break;
+                    const priceStr = station[selectedFuelType].toString().replace(',', '.');
+                    price = parseFloat(priceStr);
+                    if (!isNaN(price) && price > 0) {
+                        break;
+                    }
                 }
             }
             
-            if (price) {
+            if (price && price > 0) {
                 currentFuelPrice = price;
-                currentPriceElement.textContent = `₺${price.toFixed(2)} / L`;
+                if (currentPriceElement) {
+                    currentPriceElement.textContent = `₺${price.toFixed(2)} / L`;
+                }
             } else {
-                throw new Error('No price data available');
+                throw new Error('No valid price data available');
             }
         } else {
-            throw new Error('Invalid API response');
+            throw new Error('Invalid API response structure');
         }
         
+        // Update timestamp
         const now = new Date();
         const timeString = currentLanguage === 'tr' ? 
             `Son güncelleme: ${now.toLocaleDateString('tr-TR')}` :
             `Last update: ${now.toLocaleDateString('en-US')}`;
-        updateTimeElement.textContent = timeString;
+        if (updateTimeElement) {
+            updateTimeElement.textContent = timeString;
+        }
         
     } catch (error) {
         console.error('Error loading fuel prices:', error);
-        // Fallback to mock price
-        const mockPrice = 55.50 + (Math.random() - 0.5) * 2;
-        currentFuelPrice = mockPrice;
-        currentPriceElement.textContent = `₺${mockPrice.toFixed(2)} / L`;
         
+        // Fallback to mock price with some variation
+        const basePrice = 55.50;
+        const variation = (Math.random() - 0.5) * 4; // ±2 TL variation
+        const mockPrice = Math.max(basePrice + variation, 45.0); // Minimum 45 TL
+        
+        currentFuelPrice = mockPrice;
+        
+        if (currentPriceElement) {
+            currentPriceElement.textContent = `₺${mockPrice.toFixed(2)} / L`;
+        }
+        
+        // Update timestamp with demo indicator
         const now = new Date();
         const timeString = currentLanguage === 'tr' ? 
             `Son güncelleme: ${now.toLocaleDateString('tr-TR')} (Demo)` :
             `Last update: ${now.toLocaleDateString('en-US')} (Demo)`;
-        updateTimeElement.textContent = timeString;
+        if (updateTimeElement) {
+            updateTimeElement.textContent = timeString;
+        }
     } finally {
-        priceLoader.style.display = 'none';
+        if (priceLoader) {
+            priceLoader.style.display = 'none';
+        }
     }
 }
 
