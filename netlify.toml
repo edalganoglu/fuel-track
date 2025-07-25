@@ -1,6 +1,10 @@
 [build]
   publish = "."
   command = "echo 'Static site - no build required'"
+  base = "."
+
+[build.processing]
+  skip_processing = false
 
 [[headers]]
   for = "/*"
