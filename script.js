@@ -584,7 +584,6 @@ async function loadFuelPrices() {
         priceLoader.style.display = 'none';
     }
 }
-}
 
 // Handle vehicle type change
 function handleVehicleTypeChange() {
